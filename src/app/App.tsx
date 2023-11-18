@@ -1,38 +1,76 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect, useState, } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './AppStl.css';
 
+import Header from '../pages/Header';
+
+
 
 const Registration = lazy(() => import("../pages/Register"))
-const User = lazy(() => import('../pages/User'))
+const UserComp = lazy(() => import('../pages/User'))
 const Boards = lazy(() => import('../pages/Boards'))
 const BoardsItems = lazy(() => import('../pages/BoardsItems'))
 
 
 
-
 function App() {
+    
+    
+    const [Isauth, setIsAuth] = useState<boolean>(false)
+
+    useEffect(() => {
+        
+        if (localStorage.getItem('user')) {
+            setIsAuth(true)
+        }
+    }, [Isauth])
+
+
     return (
         <BrowserRouter>
             <Suspense fallback={<div>Loading...</div>}>
+
                 <div className="App">
 
+                    {
+                        Isauth
+                            ?
+                            <Header setIsAuth={setIsAuth} />
+                            :
+                            <Registration setIsAuth={setIsAuth} />
+                    }
 
-                    <Routes>
 
-                        <Route path='/currentBoard' element={<BoardsItems />} />
+                    {
+                        Isauth
+                            ?
+
+                            <Routes>
 
 
-                        <Route path='/boards' element={<Boards />} />
 
-                        <Route path='/userPage' element={<User />} />
+                                <Route path='/currentBoard' element={<BoardsItems />} />
 
-                        <Route path='/' element={<Registration />} />
+                                <Route path='/boards' element={<Boards />} />
 
-                    </Routes>
+                                <Route path='/' element={<UserComp />} />
+
+
+                            </Routes>
+                            :
+                            null
+
+                    }
+
+
+
                 </div>
+
+
+
+
             </Suspense>
-        </BrowserRouter>
+        </BrowserRouter >
     );
 }
 
