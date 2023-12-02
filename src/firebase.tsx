@@ -1,7 +1,7 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from 'firebase/auth'
-
+import { getFirestore } from 'firebase/firestore'
 const firebaseConfig = {
   apiKey: "AIzaSyBTNgk9FGKKc3YIgrvcQCg2hDjIqZH4PxU",
   authDomain: "trello-workspace.firebaseapp.com",
@@ -15,5 +15,6 @@ export default initializeApp(firebaseConfig);
 
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
+const db = getFirestore(app)
 
-export { auth, app }
+export { auth, app, db }

@@ -3,12 +3,39 @@ import styles from '../styles/index.module.css'
 import { FaPen, FaUnlockKeyhole, FaUser, FaXmark } from 'react-icons/fa6'
 import { Col, Row, Select } from 'antd'
 import { NavLink } from 'react-router-dom'
-
+import { useDispatch, useSelector } from 'react-redux'
+import { addProjectFunc, fetchPosts, getCurrentProjectIndexFunc } from '../../../entities/BoardsR/BoardsReducer'
+import { AppStateType, useAppDispatch } from '../../../entities/Store/store'
+import { Firestore, collection, getDocs, onSnapshot } from 'firebase/firestore'
+import { db } from '../../../firebase'
+import { ProjectBoardArrType } from '../../../entities/BoardsR/BoardsReducerTs.interface'
+import { v4 as uuidv4 } from 'uuid';
+import { UserInfoType } from '../../../entities/UserR/UserReducer'
 
 
 
 
 const Boards: React.FC<OwnProps> = () => {
+
+    const dispatch = useDispatch()
+    const asyncDispatch = useAppDispatch()
+
+
+    const allProjectsArr = useSelector((state: AppStateType) => state.boardsReducer.projectArr)
+
+    const [allProjectsHkArr, setAllProjectsHkArr] = useState<Array<ProjectBoardArrType>>(allProjectsArr)
+
+
+    const userInfo = useSelector((state: AppStateType) => state.userReducer.userInfo)
+
+
+    useEffect(() => {
+
+        setAllProjectsHkArr(allProjectsArr)
+
+    }, [allProjectsArr])
+
+    console.log(allProjectsArr)
 
     const templateArr = [
         {
@@ -33,6 +60,46 @@ const Boards: React.FC<OwnProps> = () => {
         },
     ]
 
+    const [newProjectModal, setNewProjectModal] = useState<boolean>(false)
+
+    const [newProjectName, setNewProjectName] = useState<string>('')
+
+
+    const createNewProjectCompFunc = async () => {
+        let newProjectInfoClone: ProjectBoardArrType = {
+            id: uuidv4(),
+            boardArr: [
+                {
+                    id: 0,
+                    title: 'To do',
+                    boardName: 'todo',
+                    items: []
+                },
+                {
+                    id: 1,
+                    title: 'Doing',
+                    boardName: 'doing',
+                    items: []
+
+                },
+                {
+                    id: 2,
+                    title: 'Done',
+                    boardName: 'done',
+                    items: []
+                },
+            ],
+            boardName: newProjectName
+        }
+        await asyncDispatch(addProjectFunc(newProjectInfoClone))
+        await asyncDispatch(fetchPosts())
+    }
+
+    const foo = async (num: string) => {
+
+        await asyncDispatch(getCurrentProjectIndexFunc({ num }))
+        await asyncDispatch(fetchPosts())
+    }
 
 
     return (
@@ -43,12 +110,12 @@ const Boards: React.FC<OwnProps> = () => {
                 <div className={styles.boards_content_container}>
                     <div className={styles.boards_content_container_in_item_1}>
                         <div className={styles.boards_content_container_in_item_1_1_item}>
-                            <FaUser />
+                            <img src={`${userInfo.picture}`} />
                         </div>
                         <div className={styles.boards_content_container_in_item_1_2_item}>
                             <div className={styles.boards_content_container_in_item_1_2_item_1_item}>
                                 <div className={styles.boards_content_container_in_item_1_2_item_1_item_1_item}>
-                                    Shushanik Mirzoyan's workspace
+                                    {userInfo.name} {userInfo.email}
                                 </div>
                                 <div className={styles.boards_content_container_in_item_1_2_item_1_item_2_item}>
                                     <FaPen />
@@ -70,24 +137,7 @@ const Boards: React.FC<OwnProps> = () => {
                         </Row>
                         <div className={styles.boards_content_container_in_item_2_2_item}>
                             <div className={styles.boards_content_container_in_item_2_2_item_1_item}>
-                                Get going faster with a template from the Trello community or
-                            </div>
-                            <div className={styles.boards_content_container_in_item_2_2_item_2_item}>
-                                <Select
-                                    labelInValue
-                                    defaultValue={{ value: 'lucy', label: 'Lucy (101)' }}
-                                    style={{ width: 120 }}
-                                    options={[
-                                        {
-                                            value: 'jack',
-                                            label: 'Jack (100)',
-                                        },
-                                        {
-                                            value: 'lucy',
-                                            label: 'Lucy (101)',
-                                        },
-                                    ]}
-                                />
+                                Get going faster with a template from the Trello community
                             </div>
                         </div>
                         <div className={styles.boards_content_container_in_item_2_3_item}>
@@ -127,12 +177,22 @@ const Boards: React.FC<OwnProps> = () => {
 
                             <div className={styles.boards_content_container_in_item_2_4_item_1_item_1_0_item}>
                                 <div className={styles.boards_content_container_in_item_2_4_item_1_item_1_0_item_1_item}>
-                                    <NavLink to={'/currentBoard'}>
-                                        My Trello board
-                                    </NavLink>
+
+                                    {
+                                        allProjectsHkArr.map((val: any) => {
+
+                                            return (
+                                                <NavLink onClick={() => foo(val.id)} to={`/currentBoard/${val.id}`} >
+                                                    <div className={styles.boards_content_container_in_item_2_4_item_1_item_1_0_item_1_item_1_item}>
+                                                        {val.boardName}
+                                                    </div>
+                                                </NavLink>
+                                            )
+                                        })
+                                    }
                                 </div>
 
-                                <div className={styles.boards_content_container_in_item_2_4_item_1_item_1_0_item_2_item}>
+                                <div onClick={() => setNewProjectModal(true)} className={styles.boards_content_container_in_item_2_4_item_1_item_1_0_item_2_item}>
                                     Create new board
                                 </div>
                             </div>
@@ -142,6 +202,28 @@ const Boards: React.FC<OwnProps> = () => {
                 </div>
 
             </div>
+            {
+                newProjectModal
+                    ?
+                    <div className={styles.board_modal}>
+                        <div className={styles.board_modal_1_item} onClick={() => setNewProjectModal(false)}>
+                            <FaXmark />
+                        </div>
+
+                        <input className={styles.board_modal_3_item} onChange={(e) => setNewProjectName(e.target.value)} />
+                        <div onClick={() => {
+                            setNewProjectModal(false)
+                            createNewProjectCompFunc()
+                        }
+
+                        }
+                            className={styles.board_modal_2_item}>
+                            Create
+                        </div>
+                    </div>
+                    :
+                    null
+            }
 
 
         </>

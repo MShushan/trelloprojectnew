@@ -3,14 +3,18 @@ import styles from '../styles/index.module.css'
 import { Col, Dropdown, MenuProps, Row, Space } from 'antd'
 
 import { FaTrello, FaCircleUser } from "react-icons/fa6";
-import { NavLink} from 'react-router-dom';
+import { NavLink, Navigate, useNavigate } from 'react-router-dom';
 import { auth } from '../../../firebase';
 import { signOut } from 'firebase/auth';
+import Register from '../../Register';
+import { userInfoFunc } from '../../../entities/UserR/UserReducer';
+import { useAppDispatch } from '../../../entities/Store/store';
 
 
+const Header: React.FC<OwnProps> = ({ setLocalStorageHook }) => {
 
-const Header: React.FC<OwnProps> = ({ setIsAuth }) => {
 
+    const asyncDispatch = useAppDispatch()
 
     const handleSignOut = () => {
 
@@ -18,14 +22,16 @@ const Header: React.FC<OwnProps> = ({ setIsAuth }) => {
             .then(() => {
 
                 localStorage.removeItem("user")
-                setIsAuth(false)
+                setLocalStorageHook(false)
+                asyncDispatch(userInfoFunc({ name: '', email: '', picture: '' }))
+
             })
             .catch(error => console.log(error))
     }
 
     const items: MenuProps['items'] = [
         {
-            label: <NavLink to='/userPage'>Profile and visibility</NavLink>,
+            label: <NavLink to='/'>Profile and visibility</NavLink>,
             key: '0',
         },
         {
@@ -42,7 +48,7 @@ const Header: React.FC<OwnProps> = ({ setIsAuth }) => {
         <div className={styles.header_content}>
             <Row>
                 <Col span={12} className={styles.header_content_first_col}>
-                    <NavLink to='/userPage'>
+                    <NavLink to='/'>
                         <div className={styles.header_content_first_col_1_item}>
                             <div className={styles.header_content_first_col_1_item_1_item}>
                                 <FaTrello />
@@ -76,5 +82,5 @@ export default Header
 
 
 type OwnProps = {
-    setIsAuth: (type: boolean) => void
+    setLocalStorageHook: (type: boolean) => void
 }

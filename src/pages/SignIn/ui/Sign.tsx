@@ -1,26 +1,29 @@
 import React from 'react'
+import { useDispatch } from 'react-redux'
 import { auth } from '../../../firebase'
 import { GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from 'firebase/auth'
 
 
 import styles from '../styles/SignIn.module.css'
+import { fetchUserInfo, userInfoFunc } from '../../../entities/UserR/UserReducer'
+import { useAppDispatch } from '../../../entities/Store/store'
 
 
-const SignIn: React.FC<OwnProps> = ({ setIsAuth }) => {
+const SignIn: React.FC<OwnProps> = ({ setLocalStorageHook }) => {
 
-    
 
+    const asyncDispatch = useAppDispatch()
 
     const authButtons = [
         {
             id: 1,
             title: 'Sign In With Google',
-            image: '/images/1.png'
+            image: '/images/authPictures/1.png'
         },
         {
             id: 2,
             title: 'Sign In With Github',
-            image: '/images/2.png'
+            image: '/images/authPictures/2.png'
         },
     ]
 
@@ -53,7 +56,9 @@ const SignIn: React.FC<OwnProps> = ({ setIsAuth }) => {
             await signInWithPopup(auth, provider)
 
             localStorage.setItem('user', JSON.stringify(auth));
-            setIsAuth(true)
+            await asyncDispatch(userInfoFunc({ name: auth.currentUser?.displayName, email: auth.currentUser?.email, picture: auth.currentUser?.photoURL }))
+            await asyncDispatch(fetchUserInfo())
+            setLocalStorageHook(true)
 
         } catch (err) {
             console.log(err)
@@ -73,7 +78,7 @@ const SignIn: React.FC<OwnProps> = ({ setIsAuth }) => {
                                 {val.title}
                             </div>
                             <div className={styles.button_image}>
-                                <img src={`${val.image}`} />
+                                <img src={val.image} />
                             </div>
                         </div>
                     )
@@ -87,6 +92,6 @@ const SignIn: React.FC<OwnProps> = ({ setIsAuth }) => {
 export default SignIn
 
 type OwnProps = {
-    setIsAuth: (type: boolean) => void
+    setLocalStorageHook: (type: boolean) => void
 
 }

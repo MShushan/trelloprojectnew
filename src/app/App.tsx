@@ -3,7 +3,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './AppStl.css';
 
 import Header from '../pages/Header';
+import { useSelector } from 'react-redux'
 
+import { AppStateType, useAppDispatch } from '../entities/Store/store';
+import { BoardArrType } from '../entities/BoardsR/BoardsReducerTs.interface';
+import { fetchPosts } from '../entities/BoardsR/BoardsReducer';
 
 
 const Registration = lazy(() => import("../pages/Register"))
@@ -14,16 +18,75 @@ const BoardsItems = lazy(() => import('../pages/BoardsItems'))
 
 
 function App() {
-    
-    
-    const [Isauth, setIsAuth] = useState<boolean>(false)
+
+    const asyncDispatch = useAppDispatch()
+
+    const currentBoardGlb = useSelector((state: AppStateType) => state.boardsReducer)
+    const loading = useSelector((state: AppStateType) => state.boardsReducer.loading)
+
+
+
+
+
+    const [currentBoardInd, setCurrentBoardInd] = useState<string>('')
+
+
+    // debugger
+
+    const [boardArrComp, setBoardArrComp] = useState<Array<BoardArrType> | null>(null)
+
+
 
     useEffect(() => {
-        
+        asyncDispatch(fetchPosts())
+
+    }, [asyncDispatch])
+
+
+    // useEffect(() => {
+
+    //     debugger
+
+    //     setCurrentBoardInd(currentBoardGlb.currentProjectIndx)
+
+
+    //     debugger
+    //     for (let i in currentBoardGlb.projectArr) {
+    //         debugger
+    //         if (currentBoardGlb.projectArr[i].id === currentBoardGlb.currentProjectIndx) {
+    //             setBoardArrComp(currentBoardGlb.projectArr[i].boardArr)
+    //         }
+    //     }
+
+    //     // if (!loading && currentBoardGlb.projectArr[currentBoardGlb.currentProjectIndx]) {
+    //     //     setBoardArrComp(currentBoardGlb.projectArr[currentBoardGlb.currentProjectIndx].boardArr)
+
+    //     // }
+
+
+
+    // }, [currentBoardGlb])
+
+
+
+
+    const [changeBoard, setChangeBoard] = useState<Array<BoardArrType> | null>(boardArrComp)
+
+    console.log(changeBoard)
+
+    const [localStorageHook, setLocalStorageHook] = useState<boolean>(false)
+
+    useEffect(() => {
+
         if (localStorage.getItem('user')) {
-            setIsAuth(true)
+            setLocalStorageHook(true)
         }
-    }, [Isauth])
+    }, [localStorageHook])
+
+
+    useEffect(() => {
+        setChangeBoard(boardArrComp)
+    }, [boardArrComp])
 
 
     return (
@@ -33,23 +96,23 @@ function App() {
                 <div className="App">
 
                     {
-                        Isauth
+                        localStorageHook
                             ?
-                            <Header setIsAuth={setIsAuth} />
+                            <Header setLocalStorageHook={setLocalStorageHook} />
                             :
-                            <Registration setIsAuth={setIsAuth} />
+                            <Registration setLocalStorageHook={setLocalStorageHook} />
                     }
 
 
                     {
-                        Isauth
+                        localStorageHook
                             ?
 
                             <Routes>
 
 
 
-                                <Route path='/currentBoard' element={<BoardsItems />} />
+                                <Route path='/currentBoard/:id' element={<BoardsItems changeBoard={changeBoard} setChangeBoard={setChangeBoard} boardArr={boardArrComp} />} />
 
                                 <Route path='/boards' element={<Boards />} />
 
